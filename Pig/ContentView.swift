@@ -12,39 +12,62 @@ struct ContentView: View {
     @State private var gameScore = 0
     @State private var randomValue = 0
     @State private var rotation = 0.0
+    @State private var gameOver = false
     var body: some View {
-        ZStack{
-            Color.gray.opacity(0.7).ignoresSafeArea()
-            VStack{
-                Image("Pig").resizable().frame(width: 150,height: 150)
-                CustomText(text: "PIG")
-                Image("pips \(randomValue)")
-                    .resizable()
-                    .frame(width: 150,height: 150)
-                    .rotationEffect(.degrees(rotation))
-                    .rotation3DEffect(.degrees(rotation), axis: (x: 1, y: 1, z: 0))
-                    .padding(50)
-                CustomText(text: "Turn Score: \(turnScore)")
-                CustomText(text: "Game Score: \(gameScore)")
-                HStack{
-                    Button("Roll"){
-                        chooseRandom(times: 3)
-                        withAnimation(.interpolatingSpring(stiffness: 10, damping: 2)) {
-                            rotation += 360
+        NavigationView{
+            ZStack{
+                Color.gray.opacity(0.7).ignoresSafeArea()
+                VStack{
+                    Image("Pig").resizable().frame(width: 150,height: 150)
+                    CustomText(text: "PIG")
+                    Image("pips \(randomValue)")
+                        .resizable()
+                        .frame(width: 150,height: 150)
+                        .rotationEffect(.degrees(rotation))
+                        .rotation3DEffect(.degrees(rotation), axis: (x: 1, y: 1, z: 0))
+                        .padding(50)
+                    CustomText(text: "Turn Score: \(turnScore)")
+                    CustomText(text: "Game Score: \(gameScore)")
+                    HStack{
+                        Button("Roll"){
+                            chooseRandom(times: 3)
+                            withAnimation(.interpolatingSpring(stiffness: 10, damping: 2)) {
+                                rotation += 360
+                            }
                         }
+                        .buttonStyle(CustomButtonStyle())
+                        Button("Hold"){
+                            gameScore += turnScore
+                            endTurn()
+                            withAnimation(.easeInOut(duration: 1)){
+                                rotation += 360
+                            }
+                            if gameScore >= 100 {
+                                gameOver = true
+                            }
+                        }
+                        .buttonStyle(CustomButtonStyle())
                     }
-                    .buttonStyle(CustomButtonStyle())
-                    Button("Hold"){
-                        gameScore += turnScore
+                    NavigationLink("How to Play", destination: InstructionsView())
+                        .font(Font.custom("Marker Felt", size: 24))
+                        .padding()
+                    Button("Reset") {
                         endTurn()
-                        withAnimation(.easeInOut(duration: 1)){
-                            rotation += 360
-                        }
+                        gameScore = 0
                     }
-                    .buttonStyle(CustomButtonStyle())
+                    .font(Font.custom("Marker Felt", size: 24))
+                    Spacer()
                 }
-                Spacer()
             }
+            .alert(isPresented: $gameOver, content: {
+                Alert(title: Text("you won the game!"), dismissButton:
+                        .destructive(Text("Play again?"), action: {
+                            withAnimation{
+                                gameScore = 0
+                                gameOver = false
+                            }
+                        }))
+            })
         }
     }
     func endTurn() {
@@ -106,6 +129,7 @@ struct InstructionsView: View {
                     Text("A player wins the game when the game score becomes 100 or more on their turn.")
                         .padding()
                 }
+                .font(Font.custom("Marker Felt", size: 24))
                 Spacer()
             }
         }
